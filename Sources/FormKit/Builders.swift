@@ -8,7 +8,7 @@
 
 import Foundation
 
-@_functionBuilder struct FormBuilder {
+@_functionBuilder public struct FormBuilder {
 //  public static func buildBlock<Header, Content, Footer>(_ sections: Section<Header, Content, Footer>...)
 //		-> [Section<Header, Content, Footer>]  {
 //    return sections
@@ -18,7 +18,7 @@ import Foundation
   }
 }
 
-@_functionBuilder struct SectionBuilder {
+@_functionBuilder public struct SectionBuilder {
 
   public static func buildBlock(_ rows: Row...) -> [Row]  {
 		rows
