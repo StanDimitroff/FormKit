@@ -8,7 +8,7 @@
 
 import UIKit
 
-public struct Row: Reusable, Adjustable {
+public struct Row: Reusable {
   public var nibName: String?
   public var viewClass: AnyClass?
 
