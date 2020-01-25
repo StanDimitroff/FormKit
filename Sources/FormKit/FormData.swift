@@ -12,16 +12,28 @@ public struct Row: Reusable, Adjustable {
   public var nibName: String?
   public var viewClass: AnyClass?
 
-	var height: CGFloat = .zero
+	public init(nibName: String? = nil, viewClass: AnyClass? = nil) {
+		self.nibName = nibName
+		self.viewClass = viewClass
+	}
 }
 
 public struct Header: HeaderFooter {
   public var nibName: String?
   public var viewClass: AnyClass?
-	
+
+	public init(nibName: String? = nil, viewClass: AnyClass? = nil) {
+		self.nibName = nibName
+		self.viewClass = viewClass
+	}
 }
 
 public struct Footer: HeaderFooter {
   public var nibName: String?
   public var viewClass: AnyClass?
+
+	public init(nibName: String? = nil, viewClass: AnyClass? = nil) {
+		self.nibName = nibName
+		self.viewClass = viewClass
+	}
 }
