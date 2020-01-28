@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "FormKit",
     products: [
-        // Products define the executables and libraries produced by a package, and make them visible to other packages.
+        // Products define the executables and libraries produced by a package, and make them visible to other packages. 
         .library(
             name: "FormKit",
             targets: ["FormKit"]),
