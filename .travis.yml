@@ -1,0 +1,5 @@
+jobs:
+include:
+  - name: Swift Build (Swift Package Manager)
+    osx_image: xcode11.3
+    script: swift build
