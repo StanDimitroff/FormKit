@@ -4,6 +4,10 @@ import Foundation
   public static func buildBlock(_ sections: Section...) -> [Section] {
     sections
   }
+
+//  public static func buildIf(_ sections: Section?...) -> [Section] {
+//    sections
+//  }
 }
 
 @_functionBuilder public struct SectionBuilder {
@@ -11,3 +15,10 @@ import Foundation
     rows
   }
 }
+
+//extension SectionBuilder {
+//   static func buildIf(_ row: Component?) -> Component {
+//    []
+//  }
+//}
+

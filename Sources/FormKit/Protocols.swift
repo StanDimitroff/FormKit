@@ -1,37 +1,31 @@
-//
-//  Protocols.swift
-//  FormKit
-//
-//  Created by Stanislav Dimitrov on 23.01.20.
-//  Copyright © 2020 Stanislav Dimitrov. All rights reserved.
-//
-
 import UIKit
 
 protocol FormSection {
-	var header: Header? { get set }
-	var footer: Footer? { get set }
-	var rows: [Row] { get set }
+  var identifier: UUID { get }
+  var header: Header? { get set }
+  var footer: Footer? { get set }
+  var rows: [Row] { get set }
 }
 
-public protocol Reusable {
+protocol Reusable {
+  var identifier: UUID { get }
   var nibName: String? { get set }
   var viewClass: AnyClass? { get set }
-	//var height: CGFloat { get set }
 }
 
-public protocol HeaderFooter: Reusable { }
-
-protocol Adjustable {
-	var height: CGFloat { get set }
+protocol HeaderFooter: Reusable {
+  var view: UIView? { get set }
 }
 
-extension Adjustable {
-	mutating func height(_ value: CGFloat) -> Self {
-		self.height = value
-		return self
-	}
+public protocol Bindable {
+
+  associatedtype Model//: FormModel
+  //var value: PartialKeyPath<Self>? { get set }
 }
+
+public protocol FormModel {
+}
+
 
 extension Reusable {
   var identifier: String {
@@ -52,4 +46,52 @@ public extension Configurable where Self: UITableViewCell {
     try block(self)
     return self
   }
+}
+
+
+
+
+class Bindable1<Value> {
+    private var observations = [(Value) -> Bool]()
+    private var lastValue: Value?
+
+    init(_ value: Value? = nil) {
+        lastValue = value
+    }
+}
+
+private extension Bindable1 {
+    func addObservation<O: AnyObject>(
+        for object: O,
+        handler: @escaping (O, Value) -> Void
+    ) {
+        // If we already have a value available, we'll give the
+        // handler access to it directly.
+        lastValue.map { handler(object, $0) }
+
+        // Each observation closure returns a Bool that indicates
+        // whether the observation should still be kept alive,
+        // based on whether the observing object is still retained.
+        observations.append { [weak object] value in
+            guard let object = object else {
+                return false
+            }
+
+            handler(object, value)
+            return true
+        }
+    }
+}
+
+extension Bindable1 {
+    func bind<O: AnyObject, T>(
+        _ sourceKeyPath: KeyPath<Value, T>,
+        to object: O,
+        _ objectKeyPath: ReferenceWritableKeyPath<O, T>
+    ) {
+        addObservation(for: object) { object, observed in
+            let value = observed[keyPath: sourceKeyPath]
+            object[keyPath: objectKeyPath] = value
+        }
+    }
 }

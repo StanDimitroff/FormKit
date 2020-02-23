@@ -1,87 +1,7 @@
 import UIKit
 
-final public class FormDataSource: NSObject {
-
-  private var tableView: UITableView!
-  private var form: Form!
-  private var sections: [Section]!
-
-  public init(tableView: UITableView, form: Form) {
-    super.init()
-    self.tableView = tableView
-    self.form = form
-    self.sections = form.sections
-
-    setup()
-    registerViews()
-  }
-
-  func toggleEditing(_ editing: Bool, animated: Bool) {
-    tableView.setEditing(editing, animated: animated)
-  }
-
-  private func setup() {
-    tableView.dataSource = self
-    tableView.delegate = self
-    tableView.tableFooterView = UIView()
-  }
-
-  private func registerViews() {
-    sections.forEach { section in
-    if let header = section.header { registerHeaderFooter(header) }
-    if let footer = section.footer { registerHeaderFooter(footer) }
-      section.rows.forEach { row in
-       registerCell(row) 
-      }
-    }
-  }
-
-  private func registerHeaderFooter(_ headerFooter: HeaderFooter) {
-    if let nibName = headerFooter.nibName {
-      tableView.register(UINib(nibName: nibName, bundle: nil), forHeaderFooterViewReuseIdentifier: headerFooter.identifier)
-    }
-
-    if let cellClass = headerFooter.viewClass {
-      tableView.register(cellClass, forHeaderFooterViewReuseIdentifier: headerFooter.identifier)
-    }
-  }
-
-  private func registerCell(_ row: Row) {
-    if let nibName = row.nibName {
-      tableView.register(UINib(nibName: nibName, bundle: nil), forCellReuseIdentifier: row.identifier)
-    }
-
-    if let cellClass = row.viewClass {
-      tableView.register(cellClass, forCellReuseIdentifier: row.identifier)
-    }
-  }
-
-  private func createHeaderFooter(forSection section: Int) -> UIView? {
-    let section = sections[section]
-		if let header = section.header {
-      let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: header.identifier)
-      return headerView
-    }
-
-    if let footer = section.footer {
-      let footerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: footer.identifier)
-      return footerView
-		}
-
-    return nil
-  }
-
-  private func section(at index: Int) -> Section {
-    return sections[index]
-  }
-
-  private func row(at indexPath: IndexPath) -> Row {
-    return sections[indexPath.section].rows[indexPath.row]
-  }
-}
-
 // MARK: - UITableViewDataSource
-extension FormDataSource: UITableViewDataSource {
+extension Form: UITableViewDataSource {
   public func numberOfSections(in tableView: UITableView) -> Int {
     return sections.count
   }
@@ -91,12 +11,16 @@ extension FormDataSource: UITableViewDataSource {
   }
 
   public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    let row = self.row(at: indexPath)
+    var row = self.row(at: indexPath)
+    row.onScroll = {
+      tableView.scrollToRow(at: indexPath, at: .bottom, animated: true)
+    }
+
     let cell = tableView.dequeueReusableCell(withIdentifier: row.identifier, for: indexPath)
-    cell.textLabel?.text = "TEST"
-//    if let cell = cell as? Configurable {
-//      cell.config()
-//    }
+    if let cell = cell as? FormCell  {
+      cell.configure(row: row)
+    }
+
     return cell
   }
 
@@ -110,7 +34,8 @@ extension FormDataSource: UITableViewDataSource {
 
   public func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
     let row = self.row(at: indexPath)
-    return row.editingStyle != nil ? true : false
+    let section = self.section(at: indexPath.section)
+    return (row.editingStyle != nil || section.editingStyle != nil) ? true : false
   }
 
   public func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
@@ -118,6 +43,8 @@ extension FormDataSource: UITableViewDataSource {
     switch editingStyle {
       case .delete:
         row.onDelete?()
+        deleteRow(at: indexPath)
+
       default:
       break
     }
@@ -125,13 +52,15 @@ extension FormDataSource: UITableViewDataSource {
 }
 
 // MARK: - UITableViewDelegate
-extension FormDataSource: UITableViewDelegate {
+extension Form: UITableViewDelegate {
   public func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-    return createHeaderFooter(forSection: section)
+    let section = self.section(at: section)
+    return section.header?.view ?? createHeaderFooter(forSection: section)
   }
 
   public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-    return createHeaderFooter(forSection: section)
+    let section = self.section(at: section)
+    return section.footer?.view ?? createHeaderFooter(forSection: section)
   }
 
   public func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -142,39 +71,42 @@ extension FormDataSource: UITableViewDelegate {
   public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
     return self.row(at: indexPath).height ??
       self.section(at: indexPath.section).rowHeight ??
-      form.rowHeight ??
-      .zero
+      rowHeight ??
+      UITableView.automaticDimension
   }
 
   public func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
     let section = self.section(at: section)
-    return section.estimatedHeaderHeight ?? 0
+    return section.estimatedHeaderHeight ?? section.headerHeight ?? headerHeight ?? .zero
   }
 
   public func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
     return self.section(at: section).headerHeight ??
-           form.headerHeight ??
+           headerHeight ??
            .zero
   }
 
   public func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
     let section = self.section(at: section)
-    return section.estimatedFooterHeight ?? 0
+    return section.estimatedFooterHeight ?? section.footerHeight ?? footerHeight ?? .zero
   }
 
   public func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
     return self.section(at: section).footerHeight ??
-           form.footerHeight ??
+           footerHeight ??
            .zero
   }
 
   public func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
     let row = self.row(at: indexPath)
-    return row.editingStyle ?? .none
+    let section = self.section(at: indexPath.section)
+    return row.editingStyle ?? section.editingStyle ?? .none
   }
 
   public func tableView(_ tableView: UITableView, titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String? {
-    return nil
+    let row = self.row(at: indexPath)
+    let section = self.section(at: indexPath.section)
+    return row.deleteTitle ?? section.deleteTitle ?? "Delete"
   }
 
   public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
