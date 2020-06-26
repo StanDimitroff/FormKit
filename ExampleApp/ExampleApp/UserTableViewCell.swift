@@ -1,7 +1,7 @@
 import UIKit
 import FormKit
 
-class UserTableViewCell: UITableViewCell, FormCell {
+class UserTableViewCell: UITableViewCell, FormCellProtocol {
   var value: String = "" {
     didSet {
       self.textLabel?.text = value

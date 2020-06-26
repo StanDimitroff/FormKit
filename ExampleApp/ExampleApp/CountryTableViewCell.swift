@@ -1,7 +1,7 @@
 import UIKit
 import FormKit
 
-class CountryTableViewCell: UITableViewCell, FormCell {
+class CountryTableViewCell: UITableViewCell, FormCellProtocol {
   @IBOutlet weak var countryLabel: UILabel!
 
 

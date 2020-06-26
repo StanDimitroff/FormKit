@@ -40,7 +40,7 @@ class ViewController: UIViewController {
     let addressClass = AddressTableViewCell.self
 
     let section1 = Section {
-      Row(viewClass).bind(user, keyPath: \.name).height(40)
+      Row(addressClass).bind(user, keyPath: \.name).height(40)
         Row(viewClass).bind(student, keyPath: \.subject)
         Row(viewClass).bind(student, keyPath: \.classNumber)
           .onSelect {

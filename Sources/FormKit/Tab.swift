@@ -2,8 +2,8 @@ import Foundation
 
 public struct Tab {
 
-  let label: String
-  var sections: [Section]
+  public let label: String
+  public var sections: [Section]
 
   public init(label: String, @TabBuilder content: () -> Section) {
     self.label = label

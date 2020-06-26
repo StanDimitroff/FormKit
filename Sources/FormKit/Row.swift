@@ -81,6 +81,15 @@ public struct Row: Reusable, Differentiable {
   }
 
   @discardableResult
+  public func bind<Root, Input>(_ object: Root, keyPath: ReferenceWritableKeyPath<Root, Input>) -> Row {
+    var row = self
+    row.value = "\(object[keyPath: keyPath])"
+    row.keyPath = keyPath
+
+    return row
+  }
+
+  @discardableResult
   public func rowAnimation(_ animation: UITableView.RowAnimation) -> Row {
     var row = self
     row.rowAnimation = animation

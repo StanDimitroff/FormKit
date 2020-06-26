@@ -110,7 +110,7 @@ final public class Form<T>: NSObject, UITableViewDataSource, UITableViewDelegate
     }
 
     let cell = tableView.dequeueReusableCell(withIdentifier: row.identifier, for: indexPath)
-    if let cell = cell as? FormCell  {
+    if let cell = cell as? FormCellProtocol  {
       cell.configure(row: row)
       cell.valueChange = { [weak self] value in
         // for structs

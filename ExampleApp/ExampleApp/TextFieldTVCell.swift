@@ -1,7 +1,7 @@
 import UIKit
 import FormKit
 
-class TextFieldTVCell: UITableViewCell, FormCell {
+class TextFieldTVCell: UITableViewCell, FormCellProtocol {
   @IBOutlet weak var textField: UITextField!
 
   func configure(row: Row) {

@@ -1,7 +1,7 @@
 import UIKit
 import FormKit
 
-class AddressTableViewCell: UITableViewCell, FormCell {
+class AddressTableViewCell: UITableViewCell, FormCellProtocol {
   func configure(row: Row) {
     addressLabel.text = row.value
   }
