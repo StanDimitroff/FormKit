@@ -8,6 +8,10 @@ public struct Section: FormSection, DifferentiableSection {
 
   public init<C>(source: Section, elements: C) where C : Collection, C.Element == Row { }
 
+  init(rows: [Row]) {
+    self.rows = rows
+  }
+
   public var differenceIdentifier: UUID {
     return identifier
   }
@@ -30,119 +34,24 @@ public struct Section: FormSection, DifferentiableSection {
   var rowHeight: CGFloat?
   var editingStyle: UITableViewCell.EditingStyle?
   var rowAnimation: UITableView.RowAnimation?
-  var deleteTitle: String?
+  var deletionTitle: String?
 }
 
 extension Section {
-  public init(headerTitle: String, footerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.headerTitle = headerTitle
-    self.footerTitle = footerTitle
-    self.rowHeight = rowHeight
+  public init(@SectionBuilder content: () -> Row) {
     self.rows = [content()]
   }
 
-  public init(headerTitle: String, footerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.headerTitle = headerTitle
-    self.footerTitle = footerTitle
-    self.rowHeight = rowHeight
+  public init(@SectionBuilder content: () -> [Row]) {
     self.rows = content()
-  }
-}
-
-extension Section {
-  public init(headerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.headerTitle = headerTitle
-    self.rowHeight = rowHeight
-    self.rows = [content()]
-  }
-
-  public init(headerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.headerTitle = headerTitle
-    self.rowHeight = rowHeight
-    self.rows = content()
-  }
-}
-
-extension Section {
-  public init(footerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.footerTitle = footerTitle
-    self.rowHeight = rowHeight
-    self.rows = [content()]
-  }
-
-  public init(footerTitle: String, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.footerTitle = footerTitle
-    self.rowHeight = rowHeight
-    self.rows = content()
-  }
-}
-
-extension Section  {
-  public init(header: Header, footer: Footer, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.header = header
-    self.rows = [content()]
-    self.footer = footer
-    self.rowHeight = rowHeight
-  }
-
-  public init(header: Header, footer: Footer, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.header = header
-    self.rows = content()
-    self.footer = footer
-    self.rowHeight = rowHeight
-  }
-}
-
-extension Section {
-  public init(header: Header, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.header = header
-    self.rows = [content()]
-    self.footer = nil
-    self.rowHeight = rowHeight
-  }
-
-  public init(header: Header, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.header = header
-    self.rows = content()
-    self.footer = nil
-    self.rowHeight = rowHeight
-  }
-}
-
-extension Section {
-  public init(footer: Footer, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.header = nil
-    self.rows = [content()]
-    self.footer = footer
-    self.rowHeight = rowHeight
-  }
-
-  public init(footer: Footer, rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.header = nil
-    self.rows = content()
-    self.footer = footer
-    self.rowHeight = rowHeight
-  }
-}
-
-extension Section {
-  public init(rowHeight: CGFloat? = nil, @SectionBuilder content: () -> Row) {
-    self.header = nil
-    self.rows = [content()]
-    self.footer = nil
-    self.rowHeight = rowHeight
-  }
-
-  public init(rowHeight: CGFloat? = nil, @SectionBuilder content: () -> [Row]) {
-    self.header = nil
-    self.rows = content()
-    self.footer = nil
-    self.rowHeight = rowHeight
   }
 }
 
 // MARK: - Modifiers
 extension Section {
+
+  /// Sets header title for this section
+  /// - Parameter title: the specified header title
   @discardableResult
   public func headerTitle(_ title: String) -> Section {
     var section = self
@@ -150,6 +59,8 @@ extension Section {
     return section
   }
 
+  /// Sets footer title for this section
+  /// - Parameter title: the specified footer title
   @discardableResult
   public func footerTitle(_ title: String) -> Section {
     var section = self
@@ -198,6 +109,8 @@ extension Section {
     return section
   }
 
+  /// Applies header view for this section
+  /// - Parameter header: the specified header
   @discardableResult
   public func header(_ header: Header) -> Section {
     var section = self
@@ -205,6 +118,8 @@ extension Section {
     return section
   }
 
+  /// Applies footer view for this section
+  /// - Parameter footer: the specified footer
   @discardableResult
   public func footer(_ footer: Footer) -> Section {
     var section = self
@@ -230,13 +145,17 @@ extension Section {
     return section
   }
 
+  /// Sets `(_:titleForDeleteConfirmationButtonForRowAt:)`for all rows in this section
+  /// - Parameter title: the specified title
   @discardableResult
-  public func deleteTitle(_ title: String) -> Section {
+  public func deletionTitle(_ title: String) -> Section {
     var section = self
-    section.deleteTitle = title
+    section.deletionTitle = title
     return section
   }
 
+  /// Adds rows to the end of this section
+  /// - Parameter rows: the rows which will be added
   @discardableResult
   public func addRows(_ rows: Row...) -> Section {
     var section = self
@@ -244,10 +163,34 @@ extension Section {
     return section
   }
 
+  /// Adds rows to the end of this section
+  /// - Parameter rows: the rows which will be added
   @discardableResult
   public func addRows(_ rows: [Row]) -> Section {
     var section = self
     section.rows.append(contentsOf: rows)
+    return section
+  }
+
+  /// Inserts rows in this section at specified index
+  /// - Parameters:
+  ///   - rows: the rows which will be inserted
+  ///   - index: the index where row will be inserted
+  @discardableResult
+  public func insertRows(_ rows: [Row], at index: Int) -> Section {
+    var section = self
+    section.rows.insert(contentsOf: rows, at: index)
+    return section
+  }
+
+  /// Inserts rows in this section at specified index
+  /// - Parameters:
+  ///   - rows: the rows which will be inserted
+  ///   - index: the index where row will be inserted
+  @discardableResult
+  public func insertRows(_ rows: Row..., at index: Int) -> Section {
+    var section = self
+    section.rows.insert(contentsOf: rows, at: index)
     return section
   }
 }
@@ -256,6 +199,4 @@ extension Section: Equatable {
   public static func == (lhs: Section, rhs: Section) -> Bool {
     return lhs.identifier == rhs.identifier
   }
-
-
 }

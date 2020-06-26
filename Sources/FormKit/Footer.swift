@@ -2,6 +2,8 @@ import UIKit
 import DifferenceKit
 
 public struct Footer: HeaderFooter, Differentiable {
+  public typealias Configuration = (UIView) -> Void
+  public typealias Selection = () -> Void
 
   let identifier: UUID = UUID()
 
@@ -13,12 +15,11 @@ public struct Footer: HeaderFooter, Differentiable {
     return self.identifier == source.identifier
   }
 
-  public typealias Selection = () -> Void
-
   public var nibName: String?
   public var viewClass: AnyClass?
   public var view: UIView?
 
+  var config: Configuration?
   var onSelect: Selection?
 
   public init(nibName: String) {
@@ -31,6 +32,13 @@ public struct Footer: HeaderFooter, Differentiable {
 
   public init(view: UIView) {
     self.view = view
+  }
+
+  @discardableResult
+  public func config(_ closure: @escaping Configuration) -> Footer {
+    var footer = self
+    footer.config = closure
+    return footer
   }
 
   @discardableResult

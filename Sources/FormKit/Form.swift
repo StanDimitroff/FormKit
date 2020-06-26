@@ -1,23 +1,24 @@
 import UIKit
 import DifferenceKit
 
-final public class Form: NSObject {
+final public class Form<T>: NSObject, UITableViewDataSource, UITableViewDelegate {
 
   // MARK: - Properties
-  private var tableView: UITableView
-  private var rowAnimation: UITableView.RowAnimation?
+  public private(set) var object: T
+  private var pendingAppliers: [Int: () -> Void] = [:]
+  var tableView: UITableView
+  var rowAnimation: UITableView.RowAnimation?
 
+  var tabs: [Tab] = []
   var sections: [Section] = []
   var headerHeight: CGFloat?
   var footerHeight: CGFloat?
   var rowHeight: CGFloat?
 
   // MARK: - Initializers
-  public init(tableView: UITableView, headerHeight: CGFloat? = nil, footerHeight: CGFloat? = nil, rowHeight: CGFloat? = nil, @FormBuilder formData: () -> Section) {
+  public init(tableView: UITableView, object: T, @FormBuilder formData: () -> Section) {
     self.tableView = tableView
-    self.headerHeight = headerHeight
-    self.footerHeight = footerHeight
-    self.rowHeight = rowHeight
+    self.object = object
     self.sections = [formData()]
 
     super.init()
@@ -26,11 +27,9 @@ final public class Form: NSObject {
     registerViews()
   }
 
-  public init(tableView: UITableView, headerHeight: CGFloat? = nil, footerHeight: CGFloat? = nil, rowHeight: CGFloat? = nil, @FormBuilder formData: () -> [Section]) {
+  public init(tableView: UITableView, object: T, @FormBuilder formData: () -> [Section]) {
     self.tableView = tableView
-    self.headerHeight = headerHeight
-    self.footerHeight = footerHeight
-    self.rowHeight = rowHeight
+    self.object = object
     self.sections = formData()
 
     super.init()
@@ -45,7 +44,7 @@ final public class Form: NSObject {
     tableView.tableFooterView = UIView()
   }
 
-  private func registerViews() {
+  func registerViews() {
     sections.forEach { section in
     if let header = section.header { registerHeaderFooter(header) }
     if let footer = section.footer { registerHeaderFooter(footer) }
@@ -53,45 +52,6 @@ final public class Form: NSObject {
        registerCell(row)
       }
     }
-  }
-
-  private func appendSections(_ sections: [Section]) {
-    let source = self.sections
-    let target = self.sections + sections
-    //self.sections.append(contentsOf: sections)
-
-    let changeset = StagedChangeset(source: source, target: target)
-    tableView.reload(using: changeset, with: .fade) { (data) in
-      self.sections = data
-      self.registerViews()
-    }
-
-
-    //tableView.insertSections(IndexSet(integer: sections.count - 1), with: .automatic)
-    //tableView.reloadData()
-  }
-
-  private func appendRows(_ rows: [Row], sectionIndex: Int) {
-    let section = self.section(at: sectionIndex)
-    sections[sectionIndex].rows.append(contentsOf: rows)
-    registerViews()
-    tableView.reloadSections(IndexSet(integer: sectionIndex), with: section.rowAnimation ?? rowAnimation ?? .automatic)
-  }
-
-  private func insertRows(_ rows: [Row], sectionIndex: Int, rowIndex: Int) {
-    let section = self.section(at: sectionIndex)
-    sections[sectionIndex].rows.insert(contentsOf: rows, at: rowIndex)
-    registerViews()
-    var indexPaths: [IndexPath] = []
-    for row in 0..<rows.count {
-      indexPaths.append(IndexPath(row: rowIndex + row, section: sectionIndex))
-    }
-    tableView.insertRows(at: indexPaths, with: section.rowAnimation ?? rowAnimation ?? .automatic)
-    //tableView.reloadSections(IndexSet(integer: sectionIndex), with: section.rowAnimation ?? rowAnimation ?? .automatic)
-  }
-
-  private func removeRows() {
-
   }
 
   func registerHeaderFooter(_ headerFooter: HeaderFooter) {
@@ -114,16 +74,11 @@ final public class Form: NSObject {
     }
   }
 
-  func createHeaderFooter(forSection section: Section) -> UIView? {
-    if let header = section.header {
-      let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: header.identifier)
-      return headerView
+  func headerFooterView(from headerFooter: HeaderFooter?) -> UIView? {
+    if let headerFooter = headerFooter {
+      let view = tableView.dequeueReusableHeaderFooterView(withIdentifier: headerFooter.identifier)
+      return view
     }
-
-    if let footer = section.footer {
-      let footerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: footer.identifier)
-      return footerView
-        }
 
     return nil
   }
@@ -136,154 +91,145 @@ final public class Form: NSObject {
     return sections[indexPath.section].rows[indexPath.row]
   }
 
-  public func removeSection(at index: Int) {
-    sections.remove(at: index)
-    tableView.deleteSections(IndexSet(integer: index), with: rowAnimation ?? .automatic)
+
+
+
+
+  public func numberOfSections(in tableView: UITableView) -> Int {
+    return sections.count
   }
 
-  func insertRow(at index: Int) {
-
+  public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    return self.section(at: section).rows.count
   }
 
-  func deleteRow(at indexPath: IndexPath) {
+  public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    var row = self.row(at: indexPath)
+    row.onScroll = {
+      tableView.scrollToRow(at: indexPath, at: .bottom, animated: true)
+    }
+
+    let cell = tableView.dequeueReusableCell(withIdentifier: row.identifier, for: indexPath)
+    if let cell = cell as? FormCell  {
+      cell.configure(row: row)
+      cell.valueChange = { [weak self] value in
+        // for structs
+        if let keyPath = row.keyPath as? WritableKeyPath<T, String> {
+          self?.object[keyPath: keyPath] = value
+          self?.updateRow(value: value, indexPath: indexPath)
+        }
+
+        // for classes
+        if let keyPath = row.keyPath as? ReferenceWritableKeyPath<T, String> {
+          self?.object[keyPath: keyPath] = value
+          self?.updateRow(value: value, indexPath: indexPath)
+        }
+      }
+    }
+    return cell
+  }
+
+  private func updateRow(value: String, indexPath: IndexPath) {
+    var row = self.row(at: indexPath)
+    row.value = value
+    sections[indexPath.section].rows[indexPath.row] = row
+  }
+
+  public func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    return self.section(at: section).headerTitle
+  }
+
+  public func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+    return self.section(at: section).footerTitle
+  }
+
+  public func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
     let row = self.row(at: indexPath)
-    sections[indexPath.section].rows.remove(at: indexPath.row)
-    tableView.deleteRows(at: [indexPath], with: row.rowAnimation ?? rowAnimation ?? .automatic)
-  }
-}
-
-
-// MARK: - Modifiers
-extension Form {
-  /// Applies header height to all sections in this form
-  /// - Parameter height:the specified header height
-  @discardableResult
-  public func headerHeight(_ height: CGFloat) -> Self {
-    self.headerHeight = height
-    return self
+    let section = self.section(at: indexPath.section)
+    return (row.editingStyle != nil || section.editingStyle != nil) ? true : false
   }
 
-  /// Applies footer height to all sections in this form
-  /// - Parameter height: the specified footer height
-  @discardableResult
-  public func footerHeight(_ height: CGFloat) -> Self {
-    self.footerHeight = height
-    return self
+  public func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    let row = self.row(at: indexPath)
+    switch editingStyle {
+      case .delete:
+        row.onDelete?()
+        removeRows(indexes: .exact(indexPath.row), sectionIndex: indexPath.section)
+      default:
+      break
+    }
   }
 
-  /// Applies row height to all rows in this form
-  /// - Parameter height: the specified row height
-  @discardableResult
-  public func rowHeight(_ height: CGFloat) -> Self {
-    self.rowHeight = height
-    return self
+
+
+
+
+  public func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+    let section = self.section(at: section)
+    let view = section.header?.view ?? headerFooterView(from: section.header)
+
+    guard let headerView = view else { return nil }
+    section.header?.config?(headerView)
+    return headerView
   }
 
-  /// Applies `UITableView.RowAnimation` to the entire form
-  /// - Parameter animation: the specified `UITableView.RowAnimation`
-  @discardableResult
-  public func rowAnimation(_ animation: UITableView.RowAnimation) -> Self {
-    self.rowAnimation = animation
-    return self
+  public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    let section = self.section(at: section)
+    let view = section.footer?.view ?? headerFooterView(from: section.footer)
+
+    guard let footerView = view else { return nil }
+    section.footer?.config?(footerView)
+    return footerView
   }
 
-  /// Add sections in the form
-  /// - Parameter sections: sections to add in form
-  /// - Parameter scrollBottom: speciefies if scroll is needed to become sections visible after addition
-  @discardableResult
-  public func addSections(_ sections: [Section], scrollBottom: Bool = false) -> Self {
-    appendSections(sections)
-    if scrollBottom { scrollToBottom(animated: true) }
-    return self
+  public func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+    let row = self.row(at: indexPath)
+    return row.estimatedHeight ?? UITableView.automaticDimension
   }
 
-  /// Add sections in the form
-  /// - Parameter sections: sections to add in form
-  /// - Parameter scrollBottom: speciefies if scroll is needed to become sections visible after addition
-  @discardableResult
-  public func addSections(_ sections: Section..., scrollBottom: Bool = false) -> Self {
-    appendSections(sections)
-    if scrollBottom { scrollToBottom(animated: true) }
-    return self
+  public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    return self.row(at: indexPath).height ??
+      self.section(at: indexPath.section).rowHeight ??
+      rowHeight ??
+      UITableView.automaticDimension
   }
 
-  /// Add rows in the a specified section
-  /// - Parameter rows: rows to add in the specified sectiom
-  /// - Parameter sectionIndex: section index to add the rows
-  @discardableResult
-  public func addRows(_ rows: Row..., in sectionIndex: Int) -> Self {
-    appendRows(rows, sectionIndex: sectionIndex)
-    return self
+  public func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
+    let section = self.section(at: section)
+    return section.estimatedHeaderHeight ?? section.headerHeight ?? headerHeight ?? .zero
   }
 
-  /// Add rows in the a specified section
-  /// - Parameter rows: rows to add in the specified sectiom
-  /// - Parameter sectionIndex: section index to add the rows
-  @discardableResult
-  public func addRows(_ rows: [Row], in sectionIndex: Int) -> Self {
-    appendRows(rows, sectionIndex: sectionIndex)
-    return self
+  public func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+    return self.section(at: section).headerHeight ??
+           headerHeight ??
+           .zero
   }
 
-  /// Add rows in the a specified section
-  /// - Parameter rows: rows to add in the specified sectiom
-  /// - Parameter sectionIndex: section index to add the rows
-  @discardableResult
-  public func insertRows(_ rows: [Row], in sectionIndex: Int, at rowIndex: Int) -> Self {
-    insertRows(rows, sectionIndex: sectionIndex, rowIndex: rowIndex)
-    return self
+  public func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
+    let section = self.section(at: section)
+    return section.estimatedFooterHeight ?? section.footerHeight ?? footerHeight ?? .zero
   }
 
-  /// Change tableView editing mode
-  /// - Parameter editing: flag indicate the change
-  /// - Parameter animated: specifies wheither the change should be animated
-  @discardableResult
-  public func toggleEditing(_ editing: Bool, animated: Bool) -> Self {
-    tableView.setEditing(editing, animated: animated)
-    return self
+  public func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    return self.section(at: section).footerHeight ??
+           footerHeight ??
+           .zero
   }
 
-  /// Expands rows according to their content without calling reloadData()
-  @discardableResult
-  public func expandIfNeeded() -> Self {
-    let currentOffset = tableView.contentOffset
-    UIView.setAnimationsEnabled(false)
-    tableView.beginUpdates()
-    tableView.endUpdates()
-    UIView.setAnimationsEnabled(true)
-    tableView.setContentOffset(currentOffset, animated: false)
-    return self
+  public func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+    let row = self.row(at: indexPath)
+    let section = self.section(at: indexPath.section)
+    return row.editingStyle ?? section.editingStyle ?? .none
   }
 
-  /// Scrolls entire form to the top
-  /// - Parameter animated: specifies wheither the scroll should be animated
-  @discardableResult
-  public func scrollToTop(animated: Bool) -> Self {
-    tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: animated)
-    return self
+  public func tableView(_ tableView: UITableView, titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String? {
+    let row = self.row(at: indexPath)
+    let section = self.section(at: indexPath.section)
+    return row.deleteTitle ?? section.deletionTitle ?? "Delete"
   }
 
-  /// Scrolls entire form to the bottom
-  /// - Parameter animated: specifies wheither the scroll should be animated
-  @discardableResult
-  public func scrollToBottom(animated: Bool) -> Self {
-    let sectionIndex = sections.count - 1
-    let section = self.section(at: sectionIndex)
-    let rowIndex = section.rows.count - 1
-
-    tableView.scrollToRow(at: IndexPath(row: rowIndex, section: sectionIndex), at: .bottom, animated: animated)
-    return self
+  public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    let row = self.row(at: indexPath)
+    row.onSelect?()
   }
-
-//  @discardableResult
-//  public func bindObject<T>(_ object: T) -> Self where T: Any {
-//    self.object = object as Any
-//    print(object)
-//  return self
-//  }
-//
-//  public func bindModel(_ model: Any) -> Self {
-//    self.bindModel = model
-//    return self
-//  }
 }

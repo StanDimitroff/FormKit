@@ -11,12 +11,14 @@ public struct Row: Reusable, Differentiable {
      return self.identifier == source.identifier
   }
 
+  public typealias Configuration = () -> Void
   public typealias Selection = () -> Void
   public typealias Deletion = () -> Void
   public typealias ValueChange = (String) -> Void
 
   typealias Scroll = () -> Void
 
+  var config: Configuration?
   var onSelect: Selection?
   var onDelete: Deletion?
   var onValueChange: ValueChange?
@@ -32,27 +34,19 @@ public struct Row: Reusable, Differentiable {
   var height: CGFloat?
   var estimatedHeight: CGFloat?
 
-  public var title: String?
+  var label: String?
   public var value: String?
 
+  private(set) var keyPath: AnyKeyPath?
 
-  //private var observations = [(T) -> Bool]()
-  //private var lastValue: T?
-
-  var obj: Any?
-
-  public init(_ nibName: String, title: String? = nil, height: CGFloat? = nil) {
+  public init(_ nibName: String, label: String? = nil) {
     self.nibName = nibName
-    self.title = title
-    self.height = height
-    //lastValue = value
+    self.label = label
   }
 
-  public init(_ viewClass: AnyClass, title: String? = nil, height: CGFloat? = nil) {
+  public init(_ viewClass: AnyClass, label: String? = nil) {
     self.viewClass = viewClass
-    self.title = title
-    self.height = height
-    //lastValue = value
+    self.label = label
   }
 
   // MARK: - Modifiers
@@ -80,28 +74,9 @@ public struct Row: Reusable, Differentiable {
   @discardableResult
   public func bind<Root, Input>(_ object: Root, keyPath: WritableKeyPath<Root, Input>) -> Row {
     var row = self
-    //row.model = model
-    //print(type.Model.self)
-//    print(object)
-//    print(object[keyPath: keyPath])
-//    print(keyPath)
-
-    //print(obj![keyPath: keyPath])
-    //print(Root.Type.self)
-
     row.value = "\(object[keyPath: keyPath])"
+    row.keyPath = keyPath
 
-//    if var user = object as? T.Model {
-//      print("USER")
-//
-//
-//    }
-
-
-
-    //    if let model = object as? FormModel, let kp = keyPath as? WritableKeyPath<FormModel, String> {
-//      row.bind = (model, kp)
-//    }
     return row
   }
 
@@ -117,12 +92,6 @@ public struct Row: Reusable, Differentiable {
     var row = self
     row.deleteTitle = title
     return row
-  }
-
-  @discardableResult
-  public func scrollHere(if condition: Bool) -> Row {
-    if condition { onScroll?() }
-    return self
   }
 
   @discardableResult

@@ -10,15 +10,18 @@ import Foundation
 //  }
 }
 
+@_functionBuilder public struct TabBuilder {
+  public static func buildBlock(_ sections: Section...) -> [Section] {
+    sections
+  }
+}
+
 @_functionBuilder public struct SectionBuilder {
   public static func buildBlock(_ rows: Row...) -> [Row]  {
     rows
   }
-}
 
-//extension SectionBuilder {
-//   static func buildIf(_ row: Component?) -> Component {
-//    []
+//  public static func buildIf(_ content: Content?) -> Content? {
+//      return content
 //  }
-//}
-
+}

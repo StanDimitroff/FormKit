@@ -1,6 +1,6 @@
 import FormKit
 
-struct User: Bindable, FormModel {
+struct User {
   typealias Model = Self
 
   var name: String
@@ -8,7 +8,7 @@ struct User: Bindable, FormModel {
 }
 
 
-struct Student: FormModel {
+struct Student {
   var classNumber: Int
   var subject: String
 }

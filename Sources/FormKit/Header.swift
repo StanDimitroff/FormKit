@@ -2,7 +2,7 @@ import UIKit
 import DifferenceKit
 
 public struct Header: HeaderFooter, Differentiable {
-  public typealias Selection = () -> Void
+  public typealias Configuration = (UIView) -> Void
 
   let identifier: UUID = UUID()
   public var nibName: String?
@@ -17,7 +17,7 @@ public struct Header: HeaderFooter, Differentiable {
     return self.identifier == source.identifier
   }
 
-  var onSelect: Selection?
+  var config: Configuration?
 
   public init(nibName: String) {
     self.nibName = nibName
@@ -32,9 +32,9 @@ public struct Header: HeaderFooter, Differentiable {
   }
 
   @discardableResult
-  public func onSelect(_ closure: @escaping Selection) -> Header {
+  public func config(_ closure: @escaping Configuration) -> Header {
     var header = self
-    header.onSelect = closure
+    header.config = closure
     return header
   }
 }

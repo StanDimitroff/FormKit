@@ -2,7 +2,6 @@ import UIKit
 import FormKit
 
 class UserTableViewCell: UITableViewCell, FormCell {
-
   var value: String = "" {
     didSet {
       self.textLabel?.text = value
@@ -10,7 +9,6 @@ class UserTableViewCell: UITableViewCell, FormCell {
   }
 
   var valueChange: ((String) -> Void)?
-
 
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
     super.init(style: .value1, reuseIdentifier: reuseIdentifier)
@@ -24,10 +22,5 @@ class UserTableViewCell: UITableViewCell, FormCell {
 
   func configure(row: Row) {
     self.textLabel?.text = row.value
-  }
-
-  func change() {
-    valueChange?("new value")
-    
   }
 }

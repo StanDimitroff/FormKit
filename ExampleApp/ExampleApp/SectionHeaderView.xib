@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16096" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina5_5" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16086"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="KX0-kV-WRP" customClass="SectionHeaderView" customModule="ExampleApp" customModuleProvider="target">
+            <rect key="frame" x="0.0" y="0.0" width="600" height="55"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <stackView opaque="NO" contentMode="scaleToFill" spacing="9" translatesAutoresizingMaskIntoConstraints="NO" id="5XF-N9-t2t">
+                    <rect key="frame" x="503" y="23" width="84" height="22"/>
+                    <subviews>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="u4c-BZ-0Pa">
+                            <rect key="frame" x="0.0" y="0.0" width="22" height="22"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="22" id="QVs-5E-IPW"/>
+                                <constraint firstAttribute="width" constant="22" id="kia-nc-Gx1"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                            <state key="normal" image="text.insert" catalog="system"/>
+                            <connections>
+                                <action selector="insertSections:" destination="KX0-kV-WRP" eventType="touchUpInside" id="UL1-sO-hog"/>
+                            </connections>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ION-7t-s4y">
+                            <rect key="frame" x="31" y="0.0" width="22" height="22"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="22" id="SMk-nt-5Pv"/>
+                                <constraint firstAttribute="width" constant="22" id="zFR-Bj-p5R"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                            <state key="normal" image="minus.rectangle" catalog="system"/>
+                            <connections>
+                                <action selector="removeSection:" destination="KX0-kV-WRP" eventType="touchUpInside" id="6F0-a4-ESP"/>
+                            </connections>
+                        </button>
+                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qiZ-wv-cI2">
+                            <rect key="frame" x="62" y="0.0" width="22" height="22"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="22" id="Jy0-iH-v8E"/>
+                                <constraint firstAttribute="height" constant="22" id="xoh-iV-E19"/>
+                            </constraints>
+                            <state key="normal" image="plus.rectangle" catalog="system"/>
+                            <connections>
+                                <action selector="addRows:" destination="KX0-kV-WRP" eventType="touchUpInside" id="e3M-yG-QBJ"/>
+                            </connections>
+                        </button>
+                    </subviews>
+                </stackView>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="5XF-N9-t2t" secondAttribute="trailing" constant="13" id="E1d-Lo-qGE"/>
+                <constraint firstAttribute="bottom" secondItem="5XF-N9-t2t" secondAttribute="bottom" constant="10" id="MHS-cU-gfn"/>
+            </constraints>
+            <nil key="simulatedStatusBarMetrics"/>
+            <freeformSimulatedSizeMetrics key="simulatedDestinationMetrics"/>
+            <point key="canvasLocation" x="139" y="154"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="minus.rectangle" catalog="system" width="128" height="93"/>
+        <image name="plus.rectangle" catalog="system" width="128" height="93"/>
+        <image name="text.insert" catalog="system" width="128" height="100"/>
+    </resources>
+</document>
