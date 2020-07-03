@@ -25,7 +25,7 @@ public struct Section: FormSection, DifferentiableSection {
   var headerTitle: String?
   var footerTitle: String?
   var header: Header?
-  var rows: [Row] = []
+  internal(set) public var rows: [Row] = []
   var footer: Footer?
   var headerHeight: CGFloat?
   var footerHeight: CGFloat?

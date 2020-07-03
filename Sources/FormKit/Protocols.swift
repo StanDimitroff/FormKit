@@ -13,6 +13,7 @@ protocol Reusable {
   var viewClass: AnyClass? { get set }
 }
 
+
 protocol HeaderFooter: Reusable {
   var view: UIView? { get set }
 }

@@ -34,8 +34,9 @@ public struct Row: Reusable, Differentiable {
   var height: CGFloat?
   var estimatedHeight: CGFloat?
 
-  var label: String?
+  public var label: String?
   public var value: String?
+  public var required: Bool = false
 
   private(set) var keyPath: AnyKeyPath?
 
@@ -50,6 +51,13 @@ public struct Row: Reusable, Differentiable {
   }
 
   // MARK: - Modifiers
+  @discardableResult
+  public func required(_ required: Bool = true) -> Row {
+    var row = self
+    row.required = required
+    return row
+  }
+
   @discardableResult
   public func height(_ height: CGFloat) -> Row {
     var row = self
